@@ -8,51 +8,25 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        html, body {
+        body {
             margin: 0;
-            padding: 0;
-            height: 100%;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            color: #37352F;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
         }
         
-        @media (prefers-color-scheme: dark) {
-            html, body {
-                color: #F8FAFC;
-                background-color: #0F172A;
-            }
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
         }
         
-        #root {
-            height: 100%;
+        /* Remove focus outline for non-keyboard users */
+        :focus:not(:focus-visible) {
+            outline: none;
         }
         
-        *::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        
-        *::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        
-        *::-webkit-scrollbar-thumb {
-            background-color: rgba(0, 0, 0, 0.2);
-            border-radius: 20px;
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            *::-webkit-scrollbar-thumb {
-                background-color: rgba(255, 255, 255, 0.2);
-            }
-        }
-        
-        /* Use Inter font feature settings for a better look */
-        h1, h2, h3, h4, h5, h6, p, span, div, button, a {
-            text-rendering: optimizeLegibility;
-            font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+        /* Better focus styles for keyboard users */
+        :focus-visible {
+            outline: 2px solid #2563eb;
+            outline-offset: 2px;
         }
     </style>
 </head>

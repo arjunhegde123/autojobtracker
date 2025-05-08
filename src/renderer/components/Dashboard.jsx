@@ -18,23 +18,30 @@ import {
   IconButton,
   Tooltip,
   Divider,
-  alpha,
   useTheme,
-  Menu,
-  MenuItem,
+  alpha,
+  LinearProgress,
+  Avatar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   TextField,
-  InputAdornment
+  MenuItem
 } from '@mui/material';
-import RefreshOutlinedIcon from '@mui/icons-material/RefreshOutlined';
-import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
-import MoreVertOutlinedIcon from '@mui/icons-material/MoreVertOutlined';
-import FilterListOutlinedIcon from '@mui/icons-material/FilterListOutlined';
-import WorkOutlineOutlinedIcon from '@mui/icons-material/WorkOutlineOutlined';
-import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
-import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined';
-import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
-import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
-import AddCircleOutlineOutlinedIcon from '@mui/icons-material/AddCircleOutlineOutlined';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import WorkIcon from '@mui/icons-material/Work';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import EmailIcon from '@mui/icons-material/Email';
+import BusinessIcon from '@mui/icons-material/Business';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
+import CancelIcon from '@mui/icons-material/Cancel';
+import EditIcon from '@mui/icons-material/Edit';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 // Mock data - in a real implementation, this would come from the applicationStore service
 const mockApplications = [
@@ -43,54 +50,64 @@ const mockApplications = [
     company: 'Google',
     position: 'Software Engineer',
     status: 'Applied',
-    applicationDate: '2023-02-10T00:00:00.000Z'
+    applicationDate: '2023-02-10T00:00:00.000Z',
+    logo: '🌐'
   },
   {
     id: 'app_2',
     company: 'Microsoft',
     position: 'Product Manager',
     status: 'Interview',
-    applicationDate: '2023-02-05T00:00:00.000Z'
+    applicationDate: '2023-02-05T00:00:00.000Z',
+    logo: '🪟'
   },
   {
     id: 'app_3',
     company: 'Apple',
     position: 'UX Designer',
     status: 'Rejected',
-    applicationDate: '2023-01-20T00:00:00.000Z'
+    applicationDate: '2023-01-20T00:00:00.000Z',
+    logo: '🍎'
   },
   {
     id: 'app_4',
     company: 'Amazon',
     position: 'Data Scientist',
     status: 'Applied',
-    applicationDate: '2023-02-12T00:00:00.000Z'
-  },
-  {
-    id: 'app_5',
-    company: 'Facebook',
-    position: 'Frontend Developer',
-    status: 'Interview',
-    applicationDate: '2023-02-15T00:00:00.000Z'
+    applicationDate: '2023-02-12T00:00:00.000Z',
+    logo: '📦'
   }
 ];
 
 // Mock stats - in a real implementation, this would come from the applicationStore service
 const mockStats = {
-  total: 5,
+  total: 4,
   statuses: {
     Applied: 2,
-    Interview: 2,
+    Interview: 1,
     Rejected: 1
   }
 };
+
+const statusOptions = [
+  { value: 'Applied', label: 'Applied' },
+  { value: 'Interview', label: 'Interview' },
+  { value: 'Rejected', label: 'Rejected' },
+];
 
 const Dashboard = () => {
   const [applications, setApplications] = useState([]);
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [anchorEl, setAnchorEl] = useState(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editIndex, setEditIndex] = useState(null);
+  const [form, setForm] = useState({
+    company: '',
+    position: '',
+    status: 'Applied',
+    applicationDate: '',
+    logo: ''
+  });
   const theme = useTheme();
 
   useEffect(() => {
@@ -99,7 +116,7 @@ const Dashboard = () => {
       setApplications(mockApplications);
       setStats(mockStats);
       setLoading(false);
-    }, 800);
+    }, 1000);
   }, []);
 
   const handleSync = () => {
@@ -107,49 +124,71 @@ const Dashboard = () => {
     // In a real implementation, this would trigger the email sync process
     setTimeout(() => {
       setLoading(false);
-    }, 1000);
+    }, 1500);
   };
 
-  const handleOptionsClick = (event) => {
-    setAnchorEl(event.currentTarget);
+  const handleDialogOpen = (index = null) => {
+    setEditIndex(index);
+    if (index !== null) {
+      setForm({ ...applications[index] });
+    } else {
+      setForm({ company: '', position: '', status: 'Applied', applicationDate: '', logo: '' });
+    }
+    setDialogOpen(true);
   };
 
-  const handleOptionsClose = () => {
-    setAnchorEl(null);
+  const handleDialogClose = () => {
+    setDialogOpen(false);
+    setEditIndex(null);
   };
 
-  // Filter applications based on search term
-  const filteredApplications = applications.filter(app => 
-    app.company.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    app.position.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleFormSave = () => {
+    if (!form.company || !form.position || !form.applicationDate) return;
+    if (editIndex !== null) {
+      const updated = [...applications];
+      updated[editIndex] = { ...form };
+      setApplications(updated);
+    } else {
+      setApplications((prev) => [
+        ...prev,
+        { ...form, id: `app_${Date.now()}` }
+      ]);
+    }
+    setDialogOpen(false);
+    setEditIndex(null);
+  };
+
+  const handleDelete = (index) => {
+    setApplications((prev) => prev.filter((_, i) => i !== index));
+  };
 
   // Helper function to get chip color based on status
   const getStatusColor = (status) => {
     switch (status) {
       case 'Applied':
         return {
-          bg: alpha(theme.palette.info.main, 0.15),
-          color: theme.palette.info.main,
-          icon: <ScheduleOutlinedIcon fontSize="small" />
+          color: 'primary',
+          icon: <HourglassEmptyIcon fontSize="small" />
         };
       case 'Interview':
         return {
-          bg: alpha(theme.palette.success.main, 0.15),
-          color: theme.palette.success.main,
-          icon: <CheckCircleOutlineOutlinedIcon fontSize="small" />
+          color: 'success',
+          icon: <CheckCircleOutlineIcon fontSize="small" />
         };
       case 'Rejected':
         return {
-          bg: alpha(theme.palette.error.main, 0.15),
-          color: theme.palette.error.main,
-          icon: <CancelOutlinedIcon fontSize="small" />
+          color: 'error',
+          icon: <CancelIcon fontSize="small" />
         };
       default:
         return {
-          bg: alpha(theme.palette.info.main, 0.15),
-          color: theme.palette.info.main,
-          icon: <ScheduleOutlinedIcon fontSize="small" />
+          color: 'default',
+          icon: null
         };
     }
   };
@@ -164,333 +203,412 @@ const Dashboard = () => {
     });
   };
 
+  // Calculate days since application
+  const getDaysSince = (dateString) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const diffTime = Math.abs(today - date);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-        <CircularProgress size={40} />
+      <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+        <CircularProgress size={60} thickness={4} />
+        <Typography variant="h6" sx={{ mt: 2, fontWeight: 500 }}>
+          Loading your dashboard...
+        </Typography>
       </Box>
     );
   }
 
   return (
     <Box>
-      {/* Header */}
-      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, mb: 3, gap: 2 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        mb: 4 
+      }}>
         <Box>
-          <Typography variant="h4" component="h1" fontWeight={600} gutterBottom>
-            Job Applications
+          <Typography 
+            variant="h4" 
+            component="h1" 
+            sx={{ 
+              fontWeight: 700,
+              background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              display: 'inline-block'
+            }}
+          >
+            Job Applications Dashboard
           </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Track and manage your job application progress
+          <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>
+            Track and manage your job applications in one place
           </Typography>
         </Box>
-        
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Tooltip title="Refresh data">
-            <Button
-              variant="outlined"
-              color="inherit"
-              startIcon={<RefreshOutlinedIcon />}
-              onClick={handleSync}
-              sx={{ borderRadius: 2 }}
-            >
-              Sync
-            </Button>
-          </Tooltip>
-          
-          <Tooltip title="New application">
-            <Button
-              variant="contained"
-              startIcon={<AddCircleOutlineOutlinedIcon />}
-              sx={{ borderRadius: 2 }}
-            >
-              Add New
-            </Button>
-          </Tooltip>
+        <Box>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            sx={{ mr: 2 }}
+            onClick={() => handleDialogOpen()}
+          >
+            Add Application
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<RefreshIcon />}
+            onClick={handleSync}
+            sx={{ px: 3, py: 1, borderRadius: 2, boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.1), 0 2px 4px -2px rgba(37, 99, 235, 0.1)' }}
+          >
+            Sync Emails
+          </Button>
         </Box>
       </Box>
 
       {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} lg={3}>
-          <Card sx={{ 
-            height: '100%', 
-            display: 'flex', 
-            flexDirection: 'column', 
-            borderRadius: 3,
-            transition: 'transform 0.2s, box-shadow 0.2s',
-            '&:hover': {
-              transform: 'translateY(-4px)',
-              boxShadow: '0px 8px 16px rgba(0, 0, 0, 0.1)',
-            }
-          }}>
-            <CardContent sx={{ flex: 1, p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography sx={{ fontSize: '0.875rem', fontWeight: 500 }} color="text.secondary">
-                  Total Applications
-                </Typography>
-                <Box sx={{ 
-                  bgcolor: alpha(theme.palette.primary.main, 0.15), 
-                  borderRadius: '50%', 
-                  width: 40, 
-                  height: 40, 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center' 
-                }}>
-                  <WorkOutlineOutlinedIcon sx={{ color: theme.palette.primary.main }} />
+        <Grid item xs={12} sm={6} md={3}>
+          <Card 
+            elevation={0}
+            sx={{ 
+              borderRadius: 3,
+              p: 1,
+              height: '100%',
+              border: '1px solid',
+              borderColor: theme.palette.divider,
+              transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)'
+              }
+            }}
+          >
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <Box>
+                  <Typography sx={{ fontSize: 14, fontWeight: 500 }} color="text.secondary" gutterBottom>
+                    Total Applications
+                  </Typography>
+                  <Typography variant="h3" component="div" sx={{ fontWeight: 700 }}>
+                    {stats.total || 0}
+                  </Typography>
                 </Box>
+                <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1), color: theme.palette.primary.main }}>
+                  <WorkIcon />
+                </Avatar>
               </Box>
-              <Typography variant="h3" component="div" fontWeight={700}>
-                {stats.total || 0}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1, display: 'flex', alignItems: 'center' }}>
-                <TrendingUpOutlinedIcon sx={{ fontSize: 16, mr: 0.5, color: theme.palette.success.main }} />
-                5 applications this month
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
+                <TrendingUpIcon fontSize="small" color="success" sx={{ mr: 0.5 }} />
+                <Typography variant="caption" color="success.main">
+                  +2 this week
+                </Typography>
+              </Box>
             </CardContent>
           </Card>
         </Grid>
-        
-        <Grid item xs={12} sm={6} lg={3}>
-          <Card sx={{ 
-            height: '100%', 
-            display: 'flex', 
-            flexDirection: 'column', 
-            borderRadius: 3,
-            transition: 'transform 0.2s, box-shadow 0.2s',
-            '&:hover': {
-              transform: 'translateY(-4px)',
-              boxShadow: '0px 8px 16px rgba(0, 0, 0, 0.1)',
-            }
-          }}>
-            <CardContent sx={{ flex: 1, p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography sx={{ fontSize: '0.875rem', fontWeight: 500 }} color="text.secondary">
-                  Applied
-                </Typography>
-                <Box sx={{ 
-                  bgcolor: alpha(theme.palette.info.main, 0.15), 
-                  borderRadius: '50%', 
-                  width: 40, 
-                  height: 40, 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center' 
-                }}>
-                  <ScheduleOutlinedIcon sx={{ color: theme.palette.info.main }} />
+        <Grid item xs={12} sm={6} md={3}>
+          <Card 
+            elevation={0}
+            sx={{ 
+              borderRadius: 3,
+              p: 1,
+              height: '100%',
+              border: '1px solid',
+              borderColor: theme.palette.divider,
+              transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)'
+              }
+            }}
+          >
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <Box>
+                  <Typography sx={{ fontSize: 14, fontWeight: 500 }} color="text.secondary" gutterBottom>
+                    Applied
+                  </Typography>
+                  <Typography variant="h3" component="div" sx={{ fontWeight: 700, color: theme.palette.primary.main }}>
+                    {stats.statuses?.Applied || 0}
+                  </Typography>
                 </Box>
+                <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1), color: theme.palette.primary.main }}>
+                  <EmailIcon />
+                </Avatar>
               </Box>
-              <Typography variant="h3" component="div" fontWeight={700} color="info.main">
-                {stats.statuses?.Applied || 0}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                {Math.round((stats.statuses?.Applied || 0) / stats.total * 100)}% of total
-              </Typography>
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                  {Math.round((stats.statuses?.Applied || 0) / stats.total * 100)}% of total
+                </Typography>
+                <LinearProgress 
+                  variant="determinate" 
+                  value={(stats.statuses?.Applied || 0) / stats.total * 100} 
+                  sx={{ 
+                    height: 6, 
+                    borderRadius: 3,
+                    bgcolor: alpha(theme.palette.primary.main, 0.1)
+                  }} 
+                />
+              </Box>
             </CardContent>
           </Card>
         </Grid>
-        
-        <Grid item xs={12} sm={6} lg={3}>
-          <Card sx={{ 
-            height: '100%', 
-            display: 'flex', 
-            flexDirection: 'column', 
-            borderRadius: 3,
-            transition: 'transform 0.2s, box-shadow 0.2s',
-            '&:hover': {
-              transform: 'translateY(-4px)',
-              boxShadow: '0px 8px 16px rgba(0, 0, 0, 0.1)',
-            }
-          }}>
-            <CardContent sx={{ flex: 1, p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography sx={{ fontSize: '0.875rem', fontWeight: 500 }} color="text.secondary">
-                  Interviews
-                </Typography>
-                <Box sx={{ 
-                  bgcolor: alpha(theme.palette.success.main, 0.15), 
-                  borderRadius: '50%', 
-                  width: 40, 
-                  height: 40, 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center' 
-                }}>
-                  <CheckCircleOutlineOutlinedIcon sx={{ color: theme.palette.success.main }} />
+        <Grid item xs={12} sm={6} md={3}>
+          <Card 
+            elevation={0}
+            sx={{ 
+              borderRadius: 3,
+              p: 1,
+              height: '100%',
+              border: '1px solid',
+              borderColor: theme.palette.divider,
+              transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)'
+              }
+            }}
+          >
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <Box>
+                  <Typography sx={{ fontSize: 14, fontWeight: 500 }} color="text.secondary" gutterBottom>
+                    Interviews
+                  </Typography>
+                  <Typography variant="h3" component="div" sx={{ fontWeight: 700, color: theme.palette.success.main }}>
+                    {stats.statuses?.Interview || 0}
+                  </Typography>
                 </Box>
+                <Avatar sx={{ bgcolor: alpha(theme.palette.success.main, 0.1), color: theme.palette.success.main }}>
+                  <CheckCircleOutlineIcon />
+                </Avatar>
               </Box>
-              <Typography variant="h3" component="div" fontWeight={700} color="success.main">
-                {stats.statuses?.Interview || 0}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                {Math.round((stats.statuses?.Interview || 0) / stats.total * 100)}% of total
-              </Typography>
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                  {Math.round((stats.statuses?.Interview || 0) / stats.total * 100)}% of total
+                </Typography>
+                <LinearProgress 
+                  variant="determinate" 
+                  value={(stats.statuses?.Interview || 0) / stats.total * 100} 
+                  sx={{ 
+                    height: 6, 
+                    borderRadius: 3,
+                    bgcolor: alpha(theme.palette.success.main, 0.1),
+                    '& .MuiLinearProgress-bar': {
+                      bgcolor: theme.palette.success.main
+                    }
+                  }} 
+                />
+              </Box>
             </CardContent>
           </Card>
         </Grid>
-        
-        <Grid item xs={12} sm={6} lg={3}>
-          <Card sx={{ 
-            height: '100%', 
-            display: 'flex', 
-            flexDirection: 'column', 
-            borderRadius: 3,
-            transition: 'transform 0.2s, box-shadow 0.2s',
-            '&:hover': {
-              transform: 'translateY(-4px)',
-              boxShadow: '0px 8px 16px rgba(0, 0, 0, 0.1)',
-            }
-          }}>
-            <CardContent sx={{ flex: 1, p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography sx={{ fontSize: '0.875rem', fontWeight: 500 }} color="text.secondary">
-                  Rejected
-                </Typography>
-                <Box sx={{ 
-                  bgcolor: alpha(theme.palette.error.main, 0.15), 
-                  borderRadius: '50%', 
-                  width: 40, 
-                  height: 40, 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center' 
-                }}>
-                  <CancelOutlinedIcon sx={{ color: theme.palette.error.main }} />
+        <Grid item xs={12} sm={6} md={3}>
+          <Card 
+            elevation={0}
+            sx={{ 
+              borderRadius: 3,
+              p: 1,
+              height: '100%',
+              border: '1px solid',
+              borderColor: theme.palette.divider,
+              transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)'
+              }
+            }}
+          >
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <Box>
+                  <Typography sx={{ fontSize: 14, fontWeight: 500 }} color="text.secondary" gutterBottom>
+                    Rejected
+                  </Typography>
+                  <Typography variant="h3" component="div" sx={{ fontWeight: 700, color: theme.palette.error.main }}>
+                    {stats.statuses?.Rejected || 0}
+                  </Typography>
                 </Box>
+                <Avatar sx={{ bgcolor: alpha(theme.palette.error.main, 0.1), color: theme.palette.error.main }}>
+                  <CancelIcon />
+                </Avatar>
               </Box>
-              <Typography variant="h3" component="div" fontWeight={700} color="error.main">
-                {stats.statuses?.Rejected || 0}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                {Math.round((stats.statuses?.Rejected || 0) / stats.total * 100)}% of total
-              </Typography>
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                  {Math.round((stats.statuses?.Rejected || 0) / stats.total * 100)}% of total
+                </Typography>
+                <LinearProgress 
+                  variant="determinate" 
+                  value={(stats.statuses?.Rejected || 0) / stats.total * 100} 
+                  sx={{ 
+                    height: 6, 
+                    borderRadius: 3,
+                    bgcolor: alpha(theme.palette.error.main, 0.1),
+                    '& .MuiLinearProgress-bar': {
+                      bgcolor: theme.palette.error.main
+                    }
+                  }} 
+                />
+              </Box>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
       {/* Applications Table */}
-      <Paper sx={{ borderRadius: 3, overflow: 'hidden', mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, borderBottom: `1px solid ${alpha(theme.palette.divider, 0.7)}` }}>
-          <Typography variant="h6" fontWeight={600}>Recent Applications</Typography>
-          
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <TextField
-              placeholder="Search applications..."
-              size="small"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              sx={{ 
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                  '& fieldset': {
-                    borderColor: alpha(theme.palette.divider, 0.7),
-                  },
-                },
-              }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchOutlinedIcon fontSize="small" color="action" />
-                  </InputAdornment>
-                ),
-              }}
-            />
-            
-            <Tooltip title="Filter">
-              <IconButton>
-                <FilterListOutlinedIcon />
-              </IconButton>
-            </Tooltip>
-            
-            <Tooltip title="More options">
-              <IconButton 
-                aria-label="more options"
-                aria-controls="application-options-menu"
-                aria-haspopup="true"
-                onClick={handleOptionsClick}
-              >
-                <MoreVertOutlinedIcon />
-              </IconButton>
-            </Tooltip>
-            <Menu
-              id="application-options-menu"
-              anchorEl={anchorEl}
-              keepMounted
-              open={Boolean(anchorEl)}
-              onClose={handleOptionsClose}
-            >
-              <MenuItem onClick={handleOptionsClose}>Export as CSV</MenuItem>
-              <MenuItem onClick={handleOptionsClose}>Create Report</MenuItem>
-              <MenuItem onClick={handleOptionsClose}>Archive</MenuItem>
-            </Menu>
-          </Box>
-        </Box>
-        
-        <TableContainer sx={{ maxHeight: 500 }}>
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
+          Recent Applications
+        </Typography>
+      </Box>
+      <Paper 
+        elevation={0}
+        sx={{ 
+          width: '100%', 
+          overflow: 'hidden',
+          borderRadius: 3,
+          border: '1px solid',
+          borderColor: theme.palette.divider
+        }}
+      >
+        <TableContainer sx={{ maxHeight: 440 }}>
           <Table stickyHeader aria-label="applications table">
             <TableHead>
               <TableRow>
-                <TableCell>Company</TableCell>
-                <TableCell>Position</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Date Applied</TableCell>
-                <TableCell align="right">Actions</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Company</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Position</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Date Applied</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Days</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 600 }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredApplications.length > 0 ? (
-                filteredApplications.map((app) => (
-                  <TableRow 
-                    key={app.id}
-                    hover
-                    sx={{ 
-                      '&:last-child td, &:last-child th': { border: 0 },
-                      cursor: 'pointer',
-                      transition: 'background-color 0.2s',
-                      '&:hover': {
-                        backgroundColor: alpha(theme.palette.primary.light, 0.1),
-                      }
-                    }}
-                  >
-                    <TableCell>
-                      <Typography fontWeight={500}>{app.company}</Typography>
-                    </TableCell>
-                    <TableCell>{app.position}</TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Chip
-                          icon={getStatusColor(app.status).icon}
-                          label={app.status}
-                          sx={{ 
-                            backgroundColor: getStatusColor(app.status).bg,
-                            color: getStatusColor(app.status).color,
-                            fontWeight: 500,
-                            '.MuiChip-icon': {
-                              color: getStatusColor(app.status).color,
-                            }
-                          }}
+              {applications.length > 0 ? (
+                applications.map((app, idx) => {
+                  const { color, icon } = getStatusColor(app.status);
+                  const daysSince = getDaysSince(app.applicationDate);
+                  
+                  return (
+                    <TableRow 
+                      hover 
+                      key={app.id}
+                      sx={{ 
+                        '&:hover': { 
+                          bgcolor: alpha(theme.palette.primary.main, 0.04)
+                        }
+                      }}
+                    >
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Avatar 
+                            sx={{ 
+                              width: 32, 
+                              height: 32, 
+                              mr: 1.5, 
+                              fontSize: '1rem',
+                              bgcolor: alpha(theme.palette.primary.main, 0.1),
+                              color: theme.palette.primary.main
+                            }}
+                          >
+                            {app.logo}
+                          </Avatar>
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            {app.company}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          {app.position}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Chip 
+                          label={app.status} 
+                          color={color}
                           size="small"
+                          icon={icon}
+                          sx={{ 
+                            fontWeight: 500,
+                            '& .MuiChip-icon': {
+                              ml: '4px'
+                            }
+                          }} 
                         />
-                      </Box>
-                    </TableCell>
-                    <TableCell>{formatDate(app.applicationDate)}</TableCell>
-                    <TableCell align="right">
-                      <Tooltip title="More options">
-                        <IconButton size="small">
-                          <MoreVertOutlinedIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          {formatDate(app.applicationDate)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            fontWeight: 500,
+                            color: daysSince > 14 ? 'error.main' : 'text.primary'
+                          }}
+                        >
+                          {daysSince} {daysSince === 1 ? 'day' : 'days'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                          <Tooltip title="Edit">
+                            <IconButton size="small" sx={{ mr: 1 }} onClick={() => handleDialogOpen(idx)}>
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete">
+                            <IconButton size="small" color="error" onClick={() => handleDelete(idx)}>
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="View details">
+                            <IconButton size="small" sx={{ ml: 1 }}>
+                              <VisibilityIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                    <Typography variant="body1" color="text.secondary">
-                      {searchTerm ? 'No applications match your search' : 'No applications found'}
-                    </Typography>
+                  <TableCell colSpan={6} align="center">
+                    <Box sx={{ py: 5, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <Avatar 
+                        sx={{ 
+                          width: 60, 
+                          height: 60, 
+                          mb: 2,
+                          bgcolor: alpha(theme.palette.primary.main, 0.1),
+                          color: theme.palette.primary.main
+                        }}
+                      >
+                        <WorkIcon sx={{ fontSize: 30 }} />
+                      </Avatar>
+                      <Typography variant="h6" color="text.primary" sx={{ fontWeight: 500 }}>
+                        No applications found
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2, maxWidth: 300, textAlign: 'center' }}>
+                        Connect your email to automatically track job applications
+                      </Typography>
+                      <Button 
+                        variant="contained" 
+                        startIcon={<EmailIcon />}
+                        onClick={handleSync}
+                        sx={{ px: 3 }}
+                      >
+                        Sync with email
+                      </Button>
+                    </Box>
                   </TableCell>
                 </TableRow>
               )}
@@ -498,6 +616,67 @@ const Dashboard = () => {
           </Table>
         </TableContainer>
       </Paper>
+
+      {/* Add/Edit Dialog */}
+      <Dialog open={dialogOpen} onClose={handleDialogClose} maxWidth="xs" fullWidth>
+        <DialogTitle>{editIndex !== null ? 'Edit Application' : 'Add Application'}</DialogTitle>
+        <DialogContent>
+          <TextField
+            margin="dense"
+            label="Company"
+            name="company"
+            value={form.company}
+            onChange={handleFormChange}
+            fullWidth
+            required
+          />
+          <TextField
+            margin="dense"
+            label="Position"
+            name="position"
+            value={form.position}
+            onChange={handleFormChange}
+            fullWidth
+            required
+          />
+          <TextField
+            margin="dense"
+            label="Status"
+            name="status"
+            value={form.status}
+            onChange={handleFormChange}
+            select
+            fullWidth
+          >
+            {statusOptions.map((option) => (
+              <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            margin="dense"
+            label="Date Applied"
+            name="applicationDate"
+            type="date"
+            value={form.applicationDate}
+            onChange={handleFormChange}
+            fullWidth
+            required
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            margin="dense"
+            label="Logo (emoji or letter)"
+            name="logo"
+            value={form.logo}
+            onChange={handleFormChange}
+            fullWidth
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDialogClose}>Cancel</Button>
+          <Button onClick={handleFormSave} variant="contained">Save</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

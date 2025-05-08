@@ -10,45 +10,6 @@ An application for tracking job applications, generating leads, and managing you
 - **Lead Generation**: Find alumni and other connections at companies you've applied to
 - **Contact Management**: Build a network of professional contacts
 
-## Setup
-
-1. Install dependencies:
-   ```
-   npm install
-   ```
-
-2. Run the web version (for development):
-   ```
-   npm run web
-   ```
-   This will start a webpack development server at http://localhost:3000
-
-3. Run the Electron app (desktop version):
-   ```
-   npm run dev
-   ```
-
-## Scripts
-
-- `npm run web` - Start the web development server
-- `npm run dev` - Run the Electron app in development mode
-- `npm run watch` - Watch for changes and rebuild
-- `npm run build` - Build for production
-
-## Development
-
-### Project Structure
-- `src/main.js` - Electron main process
-- `src/renderer` - React frontend components
-- `src/renderer/components` - UI components
-- `src/services` - Service layer for data processing
-
-### Technologies
-- React
-- Electron
-- Material UI
-- Webpack
-
 ## Getting Started
 
 ### Prerequisites
@@ -64,7 +25,12 @@ git clone https://github.com/arjunhegde123/autojobtracker.git
 cd autojobtracker
 ```
 
-2. Create a Google Cloud Project for Gmail API access:
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Create a Google Cloud Project for Gmail API access:
    - Go to [Google Cloud Console](https://console.cloud.google.com/)
    - Create a new project
    - Enable the Gmail API
@@ -77,6 +43,28 @@ cd autojobtracker
 const GOOGLE_CLIENT_ID = 'YOUR_CLIENT_ID';
 const GOOGLE_CLIENT_SECRET = 'YOUR_CLIENT_SECRET';
 ```
+
+### Running the Application
+
+1. Start the webpack development server:
+```bash
+npm run watch
+```
+
+2. In a separate terminal, start the Electron app:
+```bash
+npm run dev
+```
+
+### Building for Production
+
+To build the application for production use:
+
+```bash
+npm run build
+```
+
+This will create executables for your platform in the `dist` directory.
 
 ## Project Structure
 

@@ -19,21 +19,7 @@ import {
   Tab,
   IconButton,
   Chip,
-  CircularProgress,
-  Alert,
-  Snackbar,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
-  Tooltip,
-  InputAdornment,
-  alpha,
-  useTheme,
+  CircularProgress
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
@@ -44,12 +30,6 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import LaunchIcon from '@mui/icons-material/Launch';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import AddIcon from '@mui/icons-material/Add';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import EmailIcon from '@mui/icons-material/Email';
-import DeleteIcon from '@mui/icons-material/Delete';
-import GoogleIcon from '@mui/icons-material/Google';
 
 // Mock data for contacts
 const mockContacts = [
@@ -137,58 +117,13 @@ function TabPanel(props) {
   );
 }
 
-// Import our sheets service
-import sheetsService from '../../services/sheetsService';
-
-// Mock leads data for initial testing
-const mockLeads = [
-  {
-    id: 'lead_1',
-    name: 'John Smith',
-    company: 'Google',
-    position: 'Technical Recruiter',
-    email: 'john.smith@example.com',
-    phone: '(555) 123-4567',
-    specialty: 'Software Engineering',
-    notes: 'Met at career fair, open to discussing opportunities'
-  },
-  {
-    id: 'lead_2',
-    name: 'Sara Johnson',
-    company: 'Microsoft',
-    position: 'HR Manager',
-    email: 'sara.j@example.com',
-    phone: '(555) 987-6543',
-    specialty: 'Product Management',
-    notes: 'Connection through LinkedIn, interested in expanding PM team'
-  },
-  {
-    id: 'lead_3',
-    name: 'Michael Brown',
-    company: 'Amazon',
-    position: 'Talent Acquisition',
-    email: 'mbrown@example.com',
-    phone: '(555) 456-7890',
-    specialty: 'Data Science',
-    notes: 'Active recruiter for technical roles'
-  }
-];
-
 const LeadGeneration = () => {
-  const theme = useTheme();
   const [tabValue, setTabValue] = useState(0);
   const [contacts, setContacts] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [filteredContacts, setFilteredContacts] = useState([]);
-  const [leads, setLeads] = useState([]);
-  const [showImportDialog, setShowImportDialog] = useState(false);
-  const [importMethod, setImportMethod] = useState('sheets');
-  const [spreadsheetId, setSpreadsheetId] = useState('');
-  const [spreadsheetRange, setSpreadsheetRange] = useState('Sheet1!A1:Z1000');
-  const [alert, setAlert] = useState({ open: false, message: '', severity: 'info' });
-  const [selectedFile, setSelectedFile] = useState(null);
 
   useEffect(() => {
     // Simulate loading data from service
@@ -236,264 +171,9 @@ const LeadGeneration = () => {
     // Would perform the appropriate action based on suggestion type
   };
 
-  // Load initial data
-  useEffect(() => {
-    setLeads(mockLeads);
-  }, []);
-  
-  // Filter leads based on search term and job type
-  const filteredLeads = leads.filter(lead => {
-    const matchesSearch = searchQuery === '' || 
-      Object.values(lead).some(value => 
-        typeof value === 'string' && value.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    
-    const matchesJobType = filterJobType === '' || 
-      (lead.specialty && lead.specialty.toLowerCase().includes(filterJobType.toLowerCase()));
-    
-    return matchesSearch && matchesJobType;
-  });
-
-  // Handle Google Sheets import
-  const handleImportFromSheets = async () => {
-    if (!spreadsheetId) {
-      setAlert({
-        open: true,
-        message: 'Please enter a spreadsheet ID',
-        severity: 'error'
-      });
-      return;
-    }
-    
-    setLoading(true);
-    
-    try {
-      // First check if API is configured
-      if (!sheetsService.checkApiConfig()) {
-        setAlert({
-          open: true,
-          message: 'Google Sheets API is not configured. Please add your API Key and Client ID in the Settings page.',
-          severity: 'error'
-        });
-        setLoading(false);
-        return;
-      }
-      
-      await sheetsService.initialize();
-      const data = await sheetsService.fetchSpreadsheetData(spreadsheetId, spreadsheetRange);
-      
-      setLeads(data);
-      setShowImportDialog(false);
-      setAlert({
-        open: true,
-        message: `Successfully imported ${data.length} leads`,
-        severity: 'success'
-      });
-    } catch (error) {
-      console.error('Error importing from Google Sheets:', error);
-      setAlert({
-        open: true,
-        message: `Error importing: ${error.message}`,
-        severity: 'error'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle CSV file import
-  const handleImportFromCSV = async () => {
-    if (!selectedFile) {
-      setAlert({
-        open: true,
-        message: 'Please select a CSV file',
-        severity: 'error'
-      });
-      return;
-    }
-    
-    setLoading(true);
-    
-    try {
-      const data = await sheetsService.importFromCSV(selectedFile);
-      
-      setLeads(data);
-      setShowImportDialog(false);
-      setAlert({
-        open: true,
-        message: `Successfully imported ${data.length} leads`,
-        severity: 'success'
-      });
-    } catch (error) {
-      console.error('Error importing from CSV:', error);
-      setAlert({
-        open: true,
-        message: `Error importing: ${error.message}`,
-        severity: 'error'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle file selection for CSV import
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setSelectedFile(file);
-    }
-  };
-
-  // Copy email to clipboard
-  const handleCopyEmail = (email) => {
-    navigator.clipboard.writeText(email);
-    setAlert({
-      open: true,
-      message: 'Email copied to clipboard',
-      severity: 'success'
-    });
-  };
-
-  // Find leads by job type
-  const handleFindLeadsByJobType = () => {
-    if (!filterJobType) {
-      setAlert({
-        open: true,
-        message: 'Please enter a job type to search for',
-        severity: 'error'
-      });
-      return;
-    }
-    
-    setLoading(true);
-    
-    try {
-      const results = sheetsService.findLeadsByJobType(filterJobType);
-      
-      if (results.length === 0) {
-        setAlert({
-          open: true,
-          message: `No leads found for "${filterJobType}"`,
-          severity: 'info'
-        });
-      } else {
-        setLeads(results);
-        setAlert({
-          open: true,
-          message: `Found ${results.length} leads for "${filterJobType}"`,
-          severity: 'success'
-        });
-      }
-    } catch (error) {
-      console.error('Error finding leads by job type:', error);
-      setAlert({
-        open: true,
-        message: `Error searching: ${error.message}`,
-        severity: 'error'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Close alert
-  const handleCloseAlert = () => {
-    setAlert({ ...alert, open: false });
-  };
-
-  // Import dialog content
-  const renderImportDialog = () => {
+  if (loading) {
     return (
-      <Dialog open={showImportDialog} onClose={() => setShowImportDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Import Leads</DialogTitle>
-        <DialogContent>
-          <Box sx={{ mb: 2 }}>
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel id="import-method-label">Import Method</InputLabel>
-              <Select
-                labelId="import-method-label"
-                value={importMethod}
-                label="Import Method"
-                onChange={(e) => setImportMethod(e.target.value)}
-              >
-                <MenuItem value="sheets">Google Sheets</MenuItem>
-                <MenuItem value="csv">CSV File</MenuItem>
-              </Select>
-            </FormControl>
-            
-            {importMethod === 'sheets' ? (
-              <Box>
-                <TextField
-                  fullWidth
-                  margin="dense"
-                  label="Spreadsheet ID"
-                  variant="outlined"
-                  value={spreadsheetId}
-                  onChange={(e) => setSpreadsheetId(e.target.value)}
-                  placeholder="Enter the Google Sheets ID from the URL"
-                  helperText="Example: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
-                  sx={{ mb: 2 }}
-                />
-                <TextField
-                  fullWidth
-                  margin="dense"
-                  label="Range"
-                  variant="outlined"
-                  value={spreadsheetRange}
-                  onChange={(e) => setSpreadsheetRange(e.target.value)}
-                  placeholder="Sheet name and range, e.g. Sheet1!A1:Z1000"
-                />
-              </Box>
-            ) : (
-              <Box sx={{ 
-                border: '1px dashed',
-                borderColor: 'divider',
-                borderRadius: 1,
-                p: 3,
-                textAlign: 'center'
-              }}>
-                <input
-                  accept=".csv"
-                  id="csv-upload"
-                  type="file"
-                  onChange={handleFileChange}
-                  style={{ display: 'none' }}
-                />
-                <label htmlFor="csv-upload">
-                  <Button
-                    component="span"
-                    variant="outlined"
-                    startIcon={<CloudUploadIcon />}
-                  >
-                    Select CSV File
-                  </Button>
-                </label>
-                {selectedFile && (
-                  <Typography variant="body2" sx={{ mt: 2 }}>
-                    Selected: {selectedFile.name}
-                  </Typography>
-                )}
-              </Box>
-            )}
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowImportDialog(false)}>Cancel</Button>
-          <Button 
-            onClick={importMethod === 'sheets' ? handleImportFromSheets : handleImportFromCSV}
-            variant="contained"
-            disabled={loading}
-          >
-            {loading ? <CircularProgress size={24} /> : 'Import'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    );
-  };
-
-  if (loading && leads.length === 0) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
         <CircularProgress />
       </Box>
     );
@@ -725,21 +405,6 @@ const LeadGeneration = () => {
           </CardContent>
         </Card>
       </TabPanel>
-
-      {/* Import Dialog */}
-      {renderImportDialog()}
-      
-      {/* Alerts */}
-      <Snackbar
-        open={alert.open}
-        autoHideDuration={6000}
-        onClose={handleCloseAlert}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert onClose={handleCloseAlert} severity={alert.severity} sx={{ width: '100%' }}>
-          {alert.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 };

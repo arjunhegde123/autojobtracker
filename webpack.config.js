@@ -1,12 +1,11 @@
 const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
 
 module.exports = {
   entry: './src/renderer/index.js',
   output: {
     path: path.resolve(__dirname, 'build'),
-    filename: 'bundle.js',
-    publicPath: '/'
+    filename: 'bundle.js'
   },
   module: {
     rules: [
@@ -26,18 +25,18 @@ module.exports = {
     extensions: ['.js', '.jsx']
   },
   plugins: [
-    new HtmlWebpackPlugin({
-      template: './src/index.html',
-      filename: 'index.html'
+    new CopyPlugin({
+      patterns: [
+        { from: 'src/index.html', to: 'index.html' }
+      ]
     })
   ],
   devServer: {
     static: {
       directory: path.join(__dirname, 'build'),
     },
-    port: 3000,
+    port: 3001,
     hot: true,
-    historyApiFallback: true,
     open: true
   }
 }; 

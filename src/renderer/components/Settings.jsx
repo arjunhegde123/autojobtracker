@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -20,21 +20,10 @@ import {
   CardActions,
   Grid,
   Alert,
-  Snackbar,
-  Stack,
-  useTheme
+  Snackbar
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import DeleteIcon from '@mui/icons-material/Delete';
-import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
-import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
-import MonitorOutlinedIcon from '@mui/icons-material/MonitorOutlined';
-
-// Import theme context
-import { useThemeMode } from '../ThemeContext';
-
-// Import API config service
-import apiConfigService from '../../services/apiConfigService';
 
 // Mock settings
 const mockSettings = {
@@ -56,38 +45,12 @@ const mockSettings = {
   dataManagement: {
     autoBackup: false,
     backupFrequency: 'weekly'
-  },
-  googleApi: {
-    apiKey: '',
-    clientId: ''
   }
 };
 
 const Settings = () => {
-  const { mode, toggleTheme } = useThemeMode();
   const [settings, setSettings] = useState(mockSettings);
   const [savedAlert, setSavedAlert] = useState(false);
-  const theme = useTheme();
-  
-  // Load saved API credentials on mount
-  useEffect(() => {
-    const credentials = apiConfigService.getGoogleApiCredentials();
-    setSettings(prev => ({
-      ...prev,
-      googleApi: credentials
-    }));
-  }, []);
-  
-  // Update settings' theme value when the actual theme changes
-  useEffect(() => {
-    setSettings(prev => ({
-      ...prev,
-      appearance: {
-        ...prev.appearance,
-        theme: mode
-      }
-    }));
-  }, [mode]);
   
   const handleSwitchChange = (section, key) => (event) => {
     setSettings({
@@ -100,19 +63,13 @@ const Settings = () => {
   };
   
   const handleSelectChange = (section, key) => (event) => {
-    const newValue = event.target.value;
     setSettings({
       ...settings,
       [section]: {
         ...settings[section],
-        [key]: newValue
+        [key]: event.target.value
       }
     });
-    
-    // If changing theme, we need to actually update the theme with our context
-    if (section === 'appearance' && key === 'theme' && newValue !== mode) {
-      toggleTheme();
-    }
   };
   
   const handleTextChange = (section, key) => (event) => {
@@ -125,30 +82,9 @@ const Settings = () => {
     });
   };
   
-  const handleThemeChange = (newTheme) => {
-    if (newTheme !== mode) {
-      toggleTheme();
-    }
-    
-    setSettings({
-      ...settings,
-      appearance: {
-        ...settings.appearance,
-        theme: newTheme
-      }
-    });
-  };
-  
   const handleSaveSettings = () => {
     // In a real app, this would save to the electron-store
     console.log('Saving settings:', settings);
-    
-    // Save Google API credentials
-    apiConfigService.saveGoogleApiCredentials(
-      settings.googleApi.apiKey,
-      settings.googleApi.clientId
-    );
-    
     setSavedAlert(true);
   };
   
@@ -290,31 +226,18 @@ const Settings = () => {
               <Divider />
               
               <ListItem>
-                <ListItemText 
-                  primary="Color Theme" 
-                  secondary="Choose between light and dark mode"
-                />
+                <ListItemText primary="Theme" />
                 <ListItemSecondaryAction>
-                  <Stack direction="row" spacing={1}>
-                    <Button
-                      variant={mode === 'light' ? 'contained' : 'outlined'}
-                      onClick={() => handleThemeChange('light')}
-                      size="small"
-                      startIcon={<LightModeOutlinedIcon />}
-                      sx={{ minWidth: 'auto', borderRadius: 2 }}
+                  <FormControl variant="standard" sx={{ minWidth: 120 }}>
+                    <Select
+                      value={settings.appearance.theme}
+                      onChange={handleSelectChange('appearance', 'theme')}
                     >
-                      Light
-                    </Button>
-                    <Button
-                      variant={mode === 'dark' ? 'contained' : 'outlined'}
-                      onClick={() => handleThemeChange('dark')}
-                      size="small"
-                      startIcon={<DarkModeOutlinedIcon />}
-                      sx={{ minWidth: 'auto', borderRadius: 2 }}
-                    >
-                      Dark
-                    </Button>
-                  </Stack>
+                      <MenuItem value="light">Light</MenuItem>
+                      <MenuItem value="dark">Dark</MenuItem>
+                      <MenuItem value="system">System Default</MenuItem>
+                    </Select>
+                  </FormControl>
                 </ListItemSecondaryAction>
               </ListItem>
               
@@ -372,59 +295,6 @@ const Settings = () => {
                     </Select>
                   </FormControl>
                 </ListItemSecondaryAction>
-              </ListItem>
-            </List>
-          </Paper>
-          
-          <Paper sx={{ mb: 3 }}>
-            <List>
-              <ListItem>
-                <Typography variant="h6">Google API Configuration</Typography>
-              </ListItem>
-              <Divider />
-              
-              <ListItem>
-                <Box sx={{ width: '100%' }}>
-                  <ListItemText 
-                    primary="Google API Key" 
-                    secondary="Enter your Google API key for Google Sheets integration"
-                  />
-                  <TextField
-                    fullWidth
-                    variant="outlined"
-                    size="small"
-                    margin="dense"
-                    value={settings.googleApi.apiKey}
-                    onChange={handleTextChange('googleApi', 'apiKey')}
-                    placeholder="Enter your Google API key"
-                  />
-                </Box>
-              </ListItem>
-              
-              <ListItem>
-                <Box sx={{ width: '100%' }}>
-                  <ListItemText 
-                    primary="Google Client ID" 
-                    secondary="Enter your Google OAuth Client ID"
-                  />
-                  <TextField
-                    fullWidth
-                    variant="outlined"
-                    size="small"
-                    margin="dense"
-                    value={settings.googleApi.clientId}
-                    onChange={handleTextChange('googleApi', 'clientId')}
-                    placeholder="Enter your Google Client ID"
-                  />
-                </Box>
-              </ListItem>
-              
-              <ListItem>
-                <Box sx={{ width: '100%' }}>
-                  <Typography variant="caption" color="text.secondary">
-                    To get these credentials, visit the <a href="https://console.cloud.google.com" target="_blank" rel="noopener noreferrer">Google Cloud Console</a>, create a project, enable the Google Sheets API, and create credentials.
-                  </Typography>
-                </Box>
               </ListItem>
             </List>
           </Paper>

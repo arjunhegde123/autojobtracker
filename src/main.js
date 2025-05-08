@@ -1,13 +1,16 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, Notification } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
+const isDev = require('electron-is-dev');
 
 Store.initRenderer();
 
 const store = new Store();
 
+let mainWindow;
+
 function createWindow() {
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
@@ -16,12 +19,14 @@ function createWindow() {
     }
   });
 
-  // In development, load from localhost
-  if (process.env.NODE_ENV === 'development') {
-    mainWindow.loadFile(path.join(__dirname, '../src/index.html'));
+  mainWindow.loadURL(
+    isDev
+      ? 'http://localhost:3000'
+      : `file://${path.join(__dirname, '../build/index.html')}`
+  );
+
+  if (isDev) {
     mainWindow.webContents.openDevTools();
-  } else {
-    mainWindow.loadFile(path.join(__dirname, 'index.html'));
   }
 }
 
@@ -37,4 +42,13 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
+});
+
+// Handle notifications
+ipcMain.on('show-notification', (event, { title, body }) => {
+  new Notification({
+    title,
+    body,
+    silent: false
+  }).show();
 }); 
